@@ -7,9 +7,9 @@ import re
 from .common import InfoExtractor
 from ..utils import (
     ExtractorError,
-    compat_urllib_parse,
-    compat_urllib_request,
     int_or_none,
+    sanitized_Request,
+    urlencode_postdata,
 )
 
 
@@ -30,12 +30,13 @@ class MoeVideoIE(InfoExtractor):
                 'ext': 'flv',
                 'title': 'Sink cut out machine',
                 'description': 'md5:f29ff97b663aefa760bf7ca63c8ca8a8',
-                'thumbnail': 're:^https?://.*\.jpg$',
+                'thumbnail': r're:^https?://.*\.jpg$',
                 'width': 540,
                 'height': 360,
                 'duration': 179,
                 'filesize': 17822500,
-            }
+            },
+            'skip': 'Video has been removed',
         },
         {
             'url': 'http://playreplay.net/video/77107.7f325710a627383d40540d8e991a',
@@ -45,12 +46,13 @@ class MoeVideoIE(InfoExtractor):
                 'ext': 'flv',
                 'title': 'Operacion Condor.',
                 'description': 'md5:7e68cb2fcda66833d5081c542491a9a3',
-                'thumbnail': 're:^https?://.*\.jpg$',
+                'thumbnail': r're:^https?://.*\.jpg$',
                 'width': 480,
                 'height': 296,
                 'duration': 6027,
                 'filesize': 588257923,
-            }
+            },
+            'skip': 'Video has been removed',
         },
     ]
 
@@ -76,8 +78,8 @@ class MoeVideoIE(InfoExtractor):
             ],
         ]
         r_json = json.dumps(r)
-        post = compat_urllib_parse.urlencode({'r': r_json})
-        req = compat_urllib_request.Request(self._API_URL, post)
+        post = urlencode_postdata({'r': r_json})
+        req = sanitized_Request(self._API_URL, post)
         req.add_header('Content-type', 'application/x-www-form-urlencoded')
 
         response = self._download_json(req, video_id)

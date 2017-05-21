@@ -5,14 +5,14 @@ import json
 
 from .common import InfoExtractor
 from ..utils import (
-    compat_urllib_request,
     int_or_none,
     ExtractorError,
+    sanitized_Request,
 )
 
 
 class VeohIE(InfoExtractor):
-    _VALID_URL = r'http://(?:www\.)?veoh\.com/(?:watch|iphone/#_Watch)/(?P<id>(?:v|yapi-)[\da-zA-Z]+)'
+    _VALID_URL = r'https?://(?:www\.)?veoh\.com/(?:watch|iphone/#_Watch)/(?P<id>(?:v|yapi-)[\da-zA-Z]+)'
 
     _TESTS = [
         {
@@ -37,6 +37,7 @@ class VeohIE(InfoExtractor):
                 'uploader': 'afp-news',
                 'duration': 123,
             },
+            'skip': 'This video has been deleted.',
         },
         {
             'url': 'http://www.veoh.com/watch/v69525809F6Nc4frX',
@@ -108,7 +109,7 @@ class VeohIE(InfoExtractor):
         if 'class="adultwarning-container"' in webpage:
             self.report_age_confirmation()
             age_limit = 18
-            request = compat_urllib_request.Request(url)
+            request = sanitized_Request(url)
             request.add_header('Cookie', 'confirmedAdult=true')
             webpage = self._download_webpage(request, video_id)
 

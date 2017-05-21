@@ -1,22 +1,14 @@
 from __future__ import unicode_literals
 
-import re
-
 from .common import InfoExtractor
-from .fivemin import FiveMinIE
-from ..utils import (
-    url_basename,
-)
 
 
 class EngadgetIE(InfoExtractor):
-    _VALID_URL = r'''(?x)https?://www.engadget.com/
-        (?:video/5min/(?P<id>\d+)|
-            [\d/]+/.*?)
-        '''
+    _VALID_URL = r'https?://(?:www\.)?engadget\.com/video/(?P<id>[^/?#]+)'
 
-    _TEST = {
-        'url': 'http://www.engadget.com/video/5min/518153925/',
+    _TESTS = [{
+        # video with 5min ID
+        'url': 'http://www.engadget.com/video/518153925/',
         'md5': 'c6820d4828a5064447a4d9fc73f312c9',
         'info_dict': {
             'id': '518153925',
@@ -24,20 +16,12 @@ class EngadgetIE(InfoExtractor):
             'title': 'Samsung Galaxy Tab Pro 8.4 Review',
         },
         'add_ie': ['FiveMin'],
-    }
+    }, {
+        # video with vidible ID
+        'url': 'https://www.engadget.com/video/57a28462134aa15a39f0421a/',
+        'only_matching': True,
+    }]
 
     def _real_extract(self, url):
-        mobj = re.match(self._VALID_URL, url)
-        video_id = mobj.group('id')
-
-        if video_id is not None:
-            return FiveMinIE._build_result(video_id)
-        else:
-            title = url_basename(url)
-            webpage = self._download_webpage(url, title)
-            ids = re.findall(r'<iframe[^>]+?playList=(\d+)', webpage)
-            return {
-                '_type': 'playlist',
-                'title': title,
-                'entries': [FiveMinIE._build_result(id) for id in ids]
-            }
+        video_id = self._match_id(url)
+        return self.url_result('aol-video:%s' % video_id)

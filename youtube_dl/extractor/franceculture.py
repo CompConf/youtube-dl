@@ -1,77 +1,63 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-import json
-import re
-
 from .common import InfoExtractor
 from ..utils import (
-    compat_parse_qs,
-    compat_urlparse,
+    determine_ext,
+    extract_attributes,
+    int_or_none,
 )
 
 
 class FranceCultureIE(InfoExtractor):
-    _VALID_URL = r'(?P<baseurl>http://(?:www\.)?franceculture\.fr/)player/reecouter\?play=(?P<id>[0-9]+)'
+    _VALID_URL = r'https?://(?:www\.)?franceculture\.fr/emissions/(?:[^/]+/)*(?P<id>[^/?#&]+)'
     _TEST = {
-        'url': 'http://www.franceculture.fr/player/reecouter?play=4795174',
+        'url': 'http://www.franceculture.fr/emissions/carnet-nomade/rendez-vous-au-pays-des-geeks',
         'info_dict': {
-            'id': '4795174',
+            'id': 'rendez-vous-au-pays-des-geeks',
+            'display_id': 'rendez-vous-au-pays-des-geeks',
             'ext': 'mp3',
             'title': 'Rendez-vous au pays des geeks',
-            'vcodec': 'none',
-            'uploader': 'Colette Fellous',
+            'thumbnail': r're:^https?://.*\.jpg$',
             'upload_date': '20140301',
-            'duration': 3601,
-            'thumbnail': r're:^http://www\.franceculture\.fr/.*/images/player/Carnet-nomade\.jpg$',
-            'description': 'Avec :Jean-Baptiste Péretié pour son documentaire sur Arte "La revanche des « geeks », une enquête menée aux Etats-Unis dans la S ...',
+            'timestamp': 1393642916,
+            'vcodec': 'none',
         }
     }
 
     def _real_extract(self, url):
-        mobj = re.match(self._VALID_URL, url)
-        video_id = mobj.group('id')
-        baseurl = mobj.group('baseurl')
+        display_id = self._match_id(url)
 
-        webpage = self._download_webpage(url, video_id)
-        params_code = self._search_regex(
-            r"<param name='movie' value='/sites/all/modules/rf/rf_player/swf/loader.swf\?([^']+)' />",
-            webpage, 'parameter code')
-        params = compat_parse_qs(params_code)
-        video_url = compat_urlparse.urljoin(baseurl, params['urlAOD'][0])
+        webpage = self._download_webpage(url, display_id)
 
-        title = self._html_search_regex(
-            r'<h1 class="title[^"]+">(.+?)</h1>', webpage, 'title')
-        uploader = self._html_search_regex(
-            r'(?s)<div id="emission".*?<span class="author">(.*?)</span>',
-            webpage, 'uploader', fatal=False)
-        thumbnail_part = self._html_search_regex(
-            r'(?s)<div id="emission".*?<img src="([^"]+)"', webpage,
-            'thumbnail', fatal=False)
-        if thumbnail_part is None:
-            thumbnail = None
-        else:
-            thumbnail = compat_urlparse.urljoin(baseurl, thumbnail_part)
+        video_data = extract_attributes(self._search_regex(
+            r'(?s)<div[^>]+class="[^"]*?(?:title-zone-diffusion|heading-zone-(?:wrapper|player-button))[^"]*?"[^>]*>.*?(<button[^>]+data-asset-source="[^"]+"[^>]+>)',
+            webpage, 'video data'))
+
+        video_url = video_data['data-asset-source']
+        title = video_data.get('data-asset-title') or self._og_search_title(webpage)
+
         description = self._html_search_regex(
-            r'(?s)<p class="desc">(.*?)</p>', webpage, 'description')
-
-        info = json.loads(params['infoData'][0])[0]
-        duration = info.get('media_length')
-        upload_date_candidate = info.get('media_section5')
-        upload_date = (
-            upload_date_candidate
-            if (upload_date_candidate is not None and
-                re.match(r'[0-9]{8}$', upload_date_candidate))
-            else None)
+            r'(?s)<div[^>]+class="intro"[^>]*>.*?<h2>(.+?)</h2>',
+            webpage, 'description', default=None)
+        thumbnail = self._search_regex(
+            r'(?s)<figure[^>]+itemtype="https://schema.org/ImageObject"[^>]*>.*?<img[^>]+(?:data-dejavu-)?src="([^"]+)"',
+            webpage, 'thumbnail', fatal=False)
+        uploader = self._html_search_regex(
+            r'(?s)<span class="author">(.*?)</span>',
+            webpage, 'uploader', default=None)
+        ext = determine_ext(video_url.lower())
 
         return {
-            'id': video_id,
+            'id': display_id,
+            'display_id': display_id,
             'url': video_url,
-            'vcodec': 'none' if video_url.lower().endswith('.mp3') else None,
-            'duration': duration,
-            'uploader': uploader,
-            'upload_date': upload_date,
             'title': title,
-            'thumbnail': thumbnail,
             'description': description,
+            'thumbnail': thumbnail,
+            'ext': ext,
+            'vcodec': 'none' if ext == 'mp3' else None,
+            'uploader': uploader,
+            'timestamp': int_or_none(video_data.get('data-asset-created-date')),
+            'duration': int_or_none(video_data.get('data-duration')),
         }

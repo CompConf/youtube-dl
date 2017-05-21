@@ -3,141 +3,157 @@ from __future__ import unicode_literals
 
 import re
 
-from .common import InfoExtractor
+from .turner import TurnerBaseIE
+from ..utils import (
+    int_or_none,
+    strip_or_none,
+)
 
-class AdultSwimIE(InfoExtractor):
-    _VALID_URL = r'https?://video\.adultswim\.com/(?P<path>.+?)(?:\.html)?(?:\?.*)?(?:#.*)?$'
-    _TEST = {
-        'url': 'http://video.adultswim.com/rick-and-morty/close-rick-counters-of-the-rick-kind.html?x=y#title',
-        'playlist': [
-            {
-                'md5': '4da359ec73b58df4575cd01a610ba5dc',
-                'info_dict': {
-                    'id': '8a250ba1450996e901453d7f02ca02f5',
-                    'ext': 'flv',
-                    'title': 'Rick and Morty Close Rick-Counters of the Rick Kind part 1',
-                    'description': 'Rick has a run in with some old associates, resulting in a fallout with Morty. You got any chips, broh?',
-                    'uploader': 'Rick and Morty',
-                    'thumbnail': 'http://i.cdn.turner.com/asfix/repository/8a250ba13f865824013fc9db8b6b0400/thumbnail_267549017116827057.jpg'
-                }
-            },
-            {
-                'md5': 'ffbdf55af9331c509d95350bd0cc1819',
-                'info_dict': {
-                    'id': '8a250ba1450996e901453d7f4bd102f6',
-                    'ext': 'flv',
-                    'title': 'Rick and Morty Close Rick-Counters of the Rick Kind part 2',
-                    'description': 'Rick has a run in with some old associates, resulting in a fallout with Morty. You got any chips, broh?',
-                    'uploader': 'Rick and Morty',
-                    'thumbnail': 'http://i.cdn.turner.com/asfix/repository/8a250ba13f865824013fc9db8b6b0400/thumbnail_267549017116827057.jpg'
-                }
-            },
-            {
-                'md5': 'b92409635540304280b4b6c36bd14a0a',
-                'info_dict': {
-                    'id': '8a250ba1450996e901453d7fa73c02f7',
-                    'ext': 'flv',
-                    'title': 'Rick and Morty Close Rick-Counters of the Rick Kind part 3',
-                    'description': 'Rick has a run in with some old associates, resulting in a fallout with Morty. You got any chips, broh?',
-                    'uploader': 'Rick and Morty',
-                    'thumbnail': 'http://i.cdn.turner.com/asfix/repository/8a250ba13f865824013fc9db8b6b0400/thumbnail_267549017116827057.jpg'
-                }
-            },
-            {
-                'md5': 'e8818891d60e47b29cd89d7b0278156d',
-                'info_dict': {
-                    'id': '8a250ba1450996e901453d7fc8ba02f8',
-                    'ext': 'flv',
-                    'title': 'Rick and Morty Close Rick-Counters of the Rick Kind part 4',
-                    'description': 'Rick has a run in with some old associates, resulting in a fallout with Morty. You got any chips, broh?',
-                    'uploader': 'Rick and Morty',
-                    'thumbnail': 'http://i.cdn.turner.com/asfix/repository/8a250ba13f865824013fc9db8b6b0400/thumbnail_267549017116827057.jpg'
-                }
-            }
-        ]
-    }
 
-    _video_extensions = {
-        '3500': 'flv',
-        '640': 'mp4',
-        '150': 'mp4',
-        'ipad': 'm3u8',
-        'iphone': 'm3u8'
-    }
-    _video_dimensions = {
-        '3500': (1280, 720),
-        '640': (480, 270),
-        '150': (320, 180)
-    }
+class AdultSwimIE(TurnerBaseIE):
+    _VALID_URL = r'https?://(?:www\.)?adultswim\.com/videos/(?P<show_path>[^/?#]+)(?:/(?P<episode_path>[^/?#]+))?'
+
+    _TESTS = [{
+        'url': 'http://adultswim.com/videos/rick-and-morty/pilot',
+        'info_dict': {
+            'id': 'rQxZvXQ4ROaSOqq-or2Mow',
+            'ext': 'mp4',
+            'title': 'Rick and Morty - Pilot',
+            'description': 'Rick moves in with his daughter\'s family and establishes himself as a bad influence on his grandson, Morty.',
+            'timestamp': 1493267400,
+            'upload_date': '20170427',
+        },
+        'params': {
+            # m3u8 download
+            'skip_download': True,
+        },
+        'expected_warnings': ['Unable to download f4m manifest'],
+    }, {
+        'url': 'http://www.adultswim.com/videos/tim-and-eric-awesome-show-great-job/dr-steve-brule-for-your-wine/',
+        'info_dict': {
+            'id': 'sY3cMUR_TbuE4YmdjzbIcQ',
+            'ext': 'mp4',
+            'title': 'Tim and Eric Awesome Show Great Job! - Dr. Steve Brule, For Your Wine',
+            'description': 'Dr. Brule reports live from Wine Country with a special report on wines.  \nWatch Tim and Eric Awesome Show Great Job! episode #20, "Embarrassed" on Adult Swim.',
+            'upload_date': '20080124',
+            'timestamp': 1201150800,
+        },
+        'params': {
+            # m3u8 download
+            'skip_download': True,
+        },
+    }, {
+        'url': 'http://www.adultswim.com/videos/decker/inside-decker-a-new-hero/',
+        'info_dict': {
+            'id': 'I0LQFQkaSUaFp8PnAWHhoQ',
+            'ext': 'mp4',
+            'title': 'Decker - Inside Decker: A New Hero',
+            'description': 'The guys recap the conclusion of the season. They announce a new hero, take a peek into the Victorville Film Archive and welcome back the talented James Dean.',
+            'timestamp': 1469480460,
+            'upload_date': '20160725',
+        },
+        'params': {
+            # m3u8 download
+            'skip_download': True,
+        },
+        'expected_warnings': ['Unable to download f4m manifest'],
+    }, {
+        'url': 'http://www.adultswim.com/videos/attack-on-titan',
+        'info_dict': {
+            'id': 'b7A69dzfRzuaXIECdxW8XQ',
+            'title': 'Attack on Titan',
+            'description': 'md5:6c8e003ea0777b47013e894767f5e114',
+        },
+        'playlist_mincount': 12,
+    }, {
+        'url': 'http://www.adultswim.com/videos/streams/williams-stream',
+        'info_dict': {
+            'id': 'd8DEBj7QRfetLsRgFnGEyg',
+            'ext': 'mp4',
+            'title': r're:^Williams Stream \d{4}-\d{2}-\d{2} \d{2}:\d{2}$',
+            'description': 'original programming',
+        },
+        'params': {
+            # m3u8 download
+            'skip_download': True,
+        },
+    }]
 
     def _real_extract(self, url):
-        mobj = re.match(self._VALID_URL, url)
-        video_path = mobj.group('path')
+        show_path, episode_path = re.match(self._VALID_URL, url).groups()
+        display_id = episode_path or show_path
+        webpage = self._download_webpage(url, display_id)
+        initial_data = self._parse_json(self._search_regex(
+            r'AS_INITIAL_DATA(?:__)?\s*=\s*({.+?});',
+            webpage, 'initial data'), display_id)
 
-        webpage = self._download_webpage(url, video_path)
-        episode_id = self._html_search_regex(
-            r'<link rel="video_src" href="http://i\.adultswim\.com/adultswim/adultswimtv/tools/swf/viralplayer.swf\?id=([0-9a-f]+?)"\s*/?\s*>',
-            webpage, 'episode_id')
-        title = self._og_search_title(webpage)
+        is_stream = show_path == 'streams'
+        if is_stream:
+            if not episode_path:
+                episode_path = 'live-stream'
 
-        index_url = 'http://asfix.adultswim.com/asfix-svc/episodeSearch/getEpisodesByIDs?networkName=AS&ids=%s' % episode_id
-        idoc = self._download_xml(index_url, title, 'Downloading episode index', 'Unable to download episode index')
+            video_data = next(stream for stream_path, stream in initial_data['streams'].items() if stream_path == episode_path)
+            video_id = video_data.get('stream')
 
-        episode_el = idoc.find('.//episode')
-        show_title = episode_el.attrib.get('collectionTitle')
-        episode_title = episode_el.attrib.get('title')
-        thumbnail = episode_el.attrib.get('thumbnailUrl')
-        description = episode_el.find('./description').text.strip()
+            if not video_id:
+                entries = []
+                for episode in video_data.get('archiveEpisodes', []):
+                    episode_url = episode.get('url')
+                    if not episode_url:
+                        continue
+                    entries.append(self.url_result(
+                        episode_url, 'AdultSwim', episode.get('id')))
+                return self.playlist_result(
+                    entries, video_data.get('id'), video_data.get('title'),
+                    strip_or_none(video_data.get('description')))
+        else:
+            show_data = initial_data['show']
 
-        entries = []
-        segment_els = episode_el.findall('./segments/segment')
+            if not episode_path:
+                entries = []
+                for video in show_data.get('videos', []):
+                    slug = video.get('slug')
+                    if not slug:
+                        continue
+                    entries.append(self.url_result(
+                        'http://adultswim.com/videos/%s/%s' % (show_path, slug),
+                        'AdultSwim', video.get('id')))
+                return self.playlist_result(
+                    entries, show_data.get('id'), show_data.get('title'),
+                    strip_or_none(show_data.get('metadata', {}).get('description')))
 
-        for part_num, segment_el in enumerate(segment_els):
-            segment_id = segment_el.attrib.get('id')
-            segment_title = '%s %s part %d' % (show_title, episode_title, part_num + 1)
-            thumbnail = segment_el.attrib.get('thumbnailUrl')
-            duration = segment_el.attrib.get('duration')
+            video_data = show_data['sluggedVideo']
+            video_id = video_data['id']
 
-            segment_url = 'http://asfix.adultswim.com/asfix-svc/episodeservices/getCvpPlaylist?networkName=AS&id=%s' % segment_id
-            idoc = self._download_xml(
-                segment_url, segment_title,
-                'Downloading segment information', 'Unable to download segment information')
-
-            formats = []
-            file_els = idoc.findall('.//files/file')
-
-            for file_el in file_els:
-                bitrate = file_el.attrib.get('bitrate')
-                type = file_el.attrib.get('type')
-                width, height = self._video_dimensions.get(bitrate, (None, None))
-                formats.append({
-                    'format_id': '%s-%s' % (bitrate, type),
-                    'url': file_el.text,
-                    'ext': self._video_extensions.get(bitrate, 'mp4'),
-                    # The bitrate may not be a number (for example: 'iphone')
-                    'tbr': int(bitrate) if bitrate.isdigit() else None,
-                    'height': height,
-                    'width': width
-                })
-
-            self._sort_formats(formats)
-
-            entries.append({
-                'id': segment_id,
-                'title': segment_title,
-                'formats': formats,
-                'uploader': show_title,
-                'thumbnail': thumbnail,
-                'duration': duration,
-                'description': description
+        info = self._extract_cvp_info(
+            'http://www.adultswim.com/videos/api/v0/assets?platform=desktop&id=' + video_id,
+            video_id, {
+                'secure': {
+                    'media_src': 'http://androidhls-secure.cdn.turner.com/adultswim/big',
+                    'tokenizer_src': 'http://www.adultswim.com/astv/mvpd/processors/services/token_ipadAdobe.do',
+                },
+            }, {
+                'url': url,
+                'site_name': 'AdultSwim',
+                'auth_required': video_data.get('auth'),
             })
 
-        return {
-            '_type': 'playlist',
-            'id': episode_id,
-            'display_id': video_path,
-            'entries': entries,
-            'title': '%s %s' % (show_title, episode_title),
-            'description': description,
-            'thumbnail': thumbnail
-        }
+        info.update({
+            'id': video_id,
+            'display_id': display_id,
+            'description': info.get('description') or strip_or_none(video_data.get('description')),
+        })
+        if not is_stream:
+            info.update({
+                'duration': info.get('duration') or int_or_none(video_data.get('duration')),
+                'timestamp': info.get('timestamp') or int_or_none(video_data.get('launch_date')),
+                'season_number': info.get('season_number') or int_or_none(video_data.get('season_number')),
+                'episode': info['title'],
+                'episode_number': info.get('episode_number') or int_or_none(video_data.get('episode_number')),
+            })
+
+            info['series'] = video_data.get('collection_title') or info.get('series')
+            if info['series'] and info['series'] != info['title']:
+                info['title'] = '%s - %s' % (info['series'], info['title'])
+
+        return info

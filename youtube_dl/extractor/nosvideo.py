@@ -6,7 +6,7 @@ import re
 from .common import InfoExtractor
 from ..utils import (
     ExtractorError,
-    compat_urllib_request,
+    sanitized_Request,
     urlencode_postdata,
     xpath_text,
     xpath_with_ns,
@@ -17,7 +17,7 @@ _x = lambda p: xpath_with_ns(p, {'xspf': 'http://xspf.org/ns/0/'})
 
 class NosVideoIE(InfoExtractor):
     _VALID_URL = r'https?://(?:www\.)?nosvideo\.com/' + \
-                 '(?:embed/|\?v=)(?P<id>[A-Za-z0-9]{12})/?'
+                 r'(?:embed/|\?v=)(?P<id>[A-Za-z0-9]{12})/?'
     _PLAYLIST_URL = 'http://nosvideo.com/xml/{xml_id:s}.xml'
     _FILE_DELETED_REGEX = r'<b>File Not Found</b>'
     _TEST = {
@@ -27,20 +27,19 @@ class NosVideoIE(InfoExtractor):
             'id': 'mu8fle7g7rpq',
             'ext': 'mp4',
             'title': 'big_buck_bunny_480p_surround-fix.avi.mp4',
-            'thumbnail': 're:^https?://.*\.jpg$',
+            'thumbnail': r're:^https?://.*\.jpg$',
         }
     }
 
     def _real_extract(self, url):
-        mobj = re.match(self._VALID_URL, url)
-        video_id = mobj.group('id')
+        video_id = self._match_id(url)
 
         fields = {
             'id': video_id,
             'op': 'download1',
             'method_free': 'Continue to Video',
         }
-        req = compat_urllib_request.Request(url, urlencode_postdata(fields))
+        req = sanitized_Request(url, urlencode_postdata(fields))
         req.add_header('Content-type', 'application/x-www-form-urlencoded')
         webpage = self._download_webpage(req, video_id,
                                          'Downloading download page')

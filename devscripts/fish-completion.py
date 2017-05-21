@@ -6,7 +6,7 @@ import os
 from os.path import dirname as dirn
 import sys
 
-sys.path.append(dirn(dirn((os.path.abspath(__file__)))))
+sys.path.insert(0, dirn(dirn((os.path.abspath(__file__)))))
 import youtube_dl
 from youtube_dl.utils import shell_quote
 
@@ -23,13 +23,13 @@ EXTRA_ARGS = {
     'batch-file': ['--require-parameter'],
 }
 
+
 def build_completion(opt_parser):
     commands = []
 
     for group in opt_parser.option_groups:
         for option in group.option_list:
             long_option = option.get_opt_string().strip('-')
-            help_msg = shell_quote([option.help])
             complete_cmd = ['complete', '--command', 'youtube-dl', '--long-option', long_option]
             if option._short_opts:
                 complete_cmd += ['--short-option', option._short_opts[0].strip('-')]
@@ -43,6 +43,7 @@ def build_completion(opt_parser):
     filled_template = template.replace('{{commands}}', '\n'.join(commands))
     with open(FISH_COMPLETION_FILE, 'w') as f:
         f.write(filled_template)
+
 
 parser = youtube_dl.parseOpts()[0]
 build_completion(parser)

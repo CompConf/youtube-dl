@@ -3,19 +3,41 @@ from __future__ import unicode_literals
 import re
 
 from .common import InfoExtractor
+from ..compat import (
+    compat_str,
+)
 from ..utils import (
     int_or_none,
-    compat_str,
+    ExtractorError,
 )
 
 
 class VubeIE(InfoExtractor):
     IE_NAME = 'vube'
     IE_DESC = 'Vube.com'
-    _VALID_URL = r'http://vube\.com/(?:[^/]+/)+(?P<id>[\da-zA-Z]{10})\b'
+    _VALID_URL = r'https?://vube\.com/(?:[^/]+/)+(?P<id>[\da-zA-Z]{10})\b'
 
     _TESTS = [
         {
+            'url': 'http://vube.com/trending/William+Wei/Y8NUZ69Tf7?t=s',
+            'md5': 'e7aabe1f8f1aa826b9e4735e1f9cee42',
+            'info_dict': {
+                'id': 'Y8NUZ69Tf7',
+                'ext': 'mp4',
+                'title': 'Best Drummer Ever [HD]',
+                'description': 'md5:2d63c4b277b85c2277761c2cf7337d71',
+                'thumbnail': r're:^https?://.*\.jpg',
+                'uploader': 'William',
+                'timestamp': 1406876915,
+                'upload_date': '20140801',
+                'duration': 258.051,
+                'like_count': int,
+                'dislike_count': int,
+                'comment_count': int,
+                'categories': ['amazing', 'hd', 'best drummer ever', 'william wei', 'bucket drumming', 'street drummer', 'epic street drumming'],
+            },
+            'skip': 'Not accessible from Travis CI server',
+        }, {
             'url': 'http://vube.com/Chiara+Grispo+Video+Channel/YL2qNPkqon',
             'md5': 'db7aba89d4603dadd627e9d1973946fe',
             'info_dict': {
@@ -23,7 +45,7 @@ class VubeIE(InfoExtractor):
                 'ext': 'mp4',
                 'title': 'Chiara Grispo - Price Tag by Jessie J',
                 'description': 'md5:8ea652a1f36818352428cb5134933313',
-                'thumbnail': 're:^http://frame\.thestaticvube\.com/snap/[0-9x]+/102e7e63057-5ebc-4f5c-4065-6ce4ebde131f\.jpg$',
+                'thumbnail': r're:^http://frame\.thestaticvube\.com/snap/[0-9x]+/102e7e63057-5ebc-4f5c-4065-6ce4ebde131f\.jpg$',
                 'uploader': 'Chiara.Grispo',
                 'timestamp': 1388743358,
                 'upload_date': '20140103',
@@ -32,7 +54,8 @@ class VubeIE(InfoExtractor):
                 'dislike_count': int,
                 'comment_count': int,
                 'categories': ['pop', 'music', 'cover', 'singing', 'jessie j', 'price tag', 'chiara grispo'],
-            }
+            },
+            'skip': 'Removed due to DMCA',
         },
         {
             'url': 'http://vube.com/SerainaMusic/my-7-year-old-sister-and-i-singing-alive-by-krewella/UeBhTudbfS?t=s&n=1',
@@ -42,7 +65,7 @@ class VubeIE(InfoExtractor):
                 'ext': 'mp4',
                 'title': 'My 7 year old Sister and I singing "Alive" by Krewella',
                 'description': 'md5:40bcacb97796339f1690642c21d56f4a',
-                'thumbnail': 're:^http://frame\.thestaticvube\.com/snap/[0-9x]+/102265d5a9f-0f17-4f6b-5753-adf08484ee1e\.jpg$',
+                'thumbnail': r're:^http://frame\.thestaticvube\.com/snap/[0-9x]+/102265d5a9f-0f17-4f6b-5753-adf08484ee1e\.jpg$',
                 'uploader': 'Seraina',
                 'timestamp': 1396492438,
                 'upload_date': '20140403',
@@ -51,7 +74,8 @@ class VubeIE(InfoExtractor):
                 'dislike_count': int,
                 'comment_count': int,
                 'categories': ['seraina', 'jessica', 'krewella', 'alive'],
-            }
+            },
+            'skip': 'Removed due to DMCA',
         }, {
             'url': 'http://vube.com/vote/Siren+Gene/0nmsMY5vEq?n=2&t=s',
             'md5': '0584fc13b50f887127d9d1007589d27f',
@@ -60,7 +84,7 @@ class VubeIE(InfoExtractor):
                 'ext': 'mp4',
                 'title': 'Frozen - Let It Go Cover by Siren Gene',
                 'description': 'My rendition of "Let It Go" originally sung by Idina Menzel.',
-                'thumbnail': 're:^http://frame\.thestaticvube\.com/snap/[0-9x]+/10283ab622a-86c9-4681-51f2-30d1f65774af\.jpg$',
+                'thumbnail': r're:^http://frame\.thestaticvube\.com/snap/[0-9x]+/10283ab622a-86c9-4681-51f2-30d1f65774af\.jpg$',
                 'uploader': 'Siren',
                 'timestamp': 1395448018,
                 'upload_date': '20140322',
@@ -69,7 +93,8 @@ class VubeIE(InfoExtractor):
                 'dislike_count': int,
                 'comment_count': int,
                 'categories': ['let it go', 'cover', 'idina menzel', 'frozen', 'singing', 'disney', 'siren gene'],
-            }
+            },
+            'skip': 'Removed due to DMCA',
         }
     ]
 
@@ -101,6 +126,11 @@ class VubeIE(InfoExtractor):
             formats.append(fmt)
 
         self._sort_formats(formats)
+
+        if not formats and video.get('vst') == 'dmca':
+            raise ExtractorError(
+                'This video has been removed in response to a complaint received under the US Digital Millennium Copyright Act.',
+                expected=True)
 
         title = video['title']
         description = video.get('description')

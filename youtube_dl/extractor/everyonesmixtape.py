@@ -4,8 +4,8 @@ import re
 
 from .common import InfoExtractor
 from ..utils import (
-    compat_urllib_request,
     ExtractorError,
+    sanitized_Request,
 )
 
 
@@ -14,14 +14,14 @@ class EveryonesMixtapeIE(InfoExtractor):
 
     _TESTS = [{
         'url': 'http://everyonesmixtape.com/#/mix/m7m0jJAbMQi/5',
-        "info_dict": {
+        'info_dict': {
             'id': '5bfseWNmlds',
             'ext': 'mp4',
-            "title": "Passion Pit - \"Sleepyhead\" (Official Music Video)",
-            "uploader": "FKR.TV",
-            "uploader_id": "frenchkissrecords",
-            "description": "Music video for \"Sleepyhead\" from Passion Pit's debut EP Chunk Of Change.\nBuy on iTunes: https://itunes.apple.com/us/album/chunk-of-change-ep/id300087641\n\nDirected by The Wilderness.\n\nhttp://www.passionpitmusic.com\nhttp://www.frenchkissrecords.com",
-            "upload_date": "20081015"
+            'title': "Passion Pit - \"Sleepyhead\" (Official Music Video)",
+            'uploader': 'FKR.TV',
+            'uploader_id': 'frenchkissrecords',
+            'description': "Music video for \"Sleepyhead\" from Passion Pit's debut EP Chunk Of Change.\nBuy on iTunes: https://itunes.apple.com/us/album/chunk-of-change-ep/id300087641\n\nDirected by The Wilderness.\n\nhttp://www.passionpitmusic.com\nhttp://www.frenchkissrecords.com",
+            'upload_date': '20081015'
         },
         'params': {
             'skip_download': True,  # This is simply YouTube
@@ -40,7 +40,7 @@ class EveryonesMixtapeIE(InfoExtractor):
         playlist_id = mobj.group('id')
 
         pllist_url = 'http://everyonesmixtape.com/mixtape.php?a=getMixes&u=-1&linked=%s&explore=' % playlist_id
-        pllist_req = compat_urllib_request.Request(pllist_url)
+        pllist_req = sanitized_Request(pllist_url)
         pllist_req.add_header('X-Requested-With', 'XMLHttpRequest')
 
         playlist_list = self._download_json(
@@ -53,7 +53,7 @@ class EveryonesMixtapeIE(InfoExtractor):
             raise ExtractorError('Playlist id not found')
 
         pl_url = 'http://everyonesmixtape.com/mixtape.php?a=getMix&id=%s&userId=null&code=' % playlist_no
-        pl_req = compat_urllib_request.Request(pl_url)
+        pl_req = sanitized_Request(pl_url)
         pl_req.add_header('X-Requested-With', 'XMLHttpRequest')
         playlist = self._download_json(
             pl_req, playlist_id, note='Downloading playlist info')

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 from __future__ import unicode_literals
 
 import re
@@ -24,7 +24,7 @@ class TeacherTubeIE(InfoExtractor):
             'ext': 'mp4',
             'title': 'Measures of dispersion from a frequency table',
             'description': 'Measures of dispersion from a frequency table',
-            'thumbnail': 're:http://.*\.jpg',
+            'thumbnail': r're:http://.*\.jpg',
         },
     }, {
         'url': 'http://www.teachertube.com/viewVideo.php?video_id=340064',
@@ -34,7 +34,7 @@ class TeacherTubeIE(InfoExtractor):
             'ext': 'mp4',
             'title': 'How to Make Paper Dolls _ Paper Art Projects',
             'description': 'Learn how to make paper dolls in this simple',
-            'thumbnail': 're:http://.*\.jpg',
+            'thumbnail': r're:http://.*\.jpg',
         },
     }, {
         'url': 'http://www.teachertube.com/music.php?music_id=8805',
@@ -57,9 +57,7 @@ class TeacherTubeIE(InfoExtractor):
     }]
 
     def _real_extract(self, url):
-        mobj = re.match(self._VALID_URL, url)
-        video_id = mobj.group('id')
-
+        video_id = self._match_id(url)
         webpage = self._download_webpage(url, video_id)
 
         title = self._html_search_meta('title', webpage, 'title', fatal=True)
@@ -121,7 +119,7 @@ class TeacherTubeUserIE(InfoExtractor):
         urls = []
         webpage = self._download_webpage(url, user_id)
         urls.extend(re.findall(self._MEDIA_RE, webpage))
-        
+
         pages = re.findall(r'/ajax-user/user-videos/%s\?page=([0-9]+)' % user_id, webpage)[:-1]
         for p in pages:
             more = 'http://www.teachertube.com/ajax-user/user-videos/%s?page=%s' % (user_id, p)

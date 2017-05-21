@@ -1,12 +1,10 @@
 from __future__ import unicode_literals
 
-import re
-
 from .common import InfoExtractor
 
 
 class Ku6IE(InfoExtractor):
-    _VALID_URL = r'http://v\.ku6\.com/show/(?P<id>[a-zA-Z0-9\-\_]+)(?:\.)*html'
+    _VALID_URL = r'https?://v\.ku6\.com/show/(?P<id>[a-zA-Z0-9\-\_]+)(?:\.)*html'
     _TEST = {
         'url': 'http://v.ku6.com/show/JG-8yS14xzBr4bCn1pu0xw...html',
         'md5': '01203549b9efbb45f4b87d55bdea1ed1',
@@ -18,11 +16,11 @@ class Ku6IE(InfoExtractor):
     }
 
     def _real_extract(self, url):
-        mobj = re.match(self._VALID_URL, url)
-        video_id = mobj.group('id')
-
+        video_id = self._match_id(url)
         webpage = self._download_webpage(url, video_id)
-        title = self._search_regex(r'<h1 title=.*>(.*?)</h1>', webpage, 'title')
+
+        title = self._html_search_regex(
+            r'<h1 title=.*>(.*?)</h1>', webpage, 'title')
         dataUrl = 'http://v.ku6.com/fetchVideo4Player/%s.html' % video_id
         jsonData = self._download_json(dataUrl, video_id)
         downloadUrl = jsonData['data']['f']
@@ -32,4 +30,3 @@ class Ku6IE(InfoExtractor):
             'title': title,
             'url': downloadUrl
         }
-

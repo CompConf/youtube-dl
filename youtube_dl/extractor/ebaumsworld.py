@@ -1,15 +1,13 @@
 from __future__ import unicode_literals
 
-import re
-
 from .common import InfoExtractor
 
 
 class EbaumsWorldIE(InfoExtractor):
-    _VALID_URL = r'https?://www\.ebaumsworld\.com/video/watch/(?P<id>\d+)'
+    _VALID_URL = r'https?://(?:www\.)?ebaumsworld\.com/videos/[^/]+/(?P<id>\d+)'
 
     _TEST = {
-        'url': 'http://www.ebaumsworld.com/video/watch/83367677/',
+        'url': 'http://www.ebaumsworld.com/videos/a-giant-python-opens-the-door/83367677/',
         'info_dict': {
             'id': '83367677',
             'ext': 'mp4',
@@ -20,8 +18,7 @@ class EbaumsWorldIE(InfoExtractor):
     }
 
     def _real_extract(self, url):
-        mobj = re.match(self._VALID_URL, url)
-        video_id = mobj.group('id')
+        video_id = self._match_id(url)
         config = self._download_xml(
             'http://www.ebaumsworld.com/video/player/%s' % video_id, video_id)
         video_url = config.find('file').text

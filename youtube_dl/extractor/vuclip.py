@@ -3,32 +3,33 @@ from __future__ import unicode_literals
 import re
 
 from .common import InfoExtractor
-from ..utils import (
+from ..compat import (
     compat_urllib_parse_urlparse,
+)
+from ..utils import (
+    ExtractorError,
     parse_duration,
-    qualities,
+    remove_end,
 )
 
 
 class VuClipIE(InfoExtractor):
-    _VALID_URL = r'http://(?:m\.)?vuclip\.com/w\?.*?cid=(?P<id>[0-9]+)'
+    _VALID_URL = r'https?://(?:m\.)?vuclip\.com/w\?.*?cid=(?P<id>[0-9]+)'
 
     _TEST = {
-        'url': 'http://m.vuclip.com/w?cid=843902317&fid=63532&z=1007&nvar&frm=index.html&bu=4757321434',
-        'md5': '92ac9d1ccefec4f0bb474661ab144fcf',
+        'url': 'http://m.vuclip.com/w?cid=1129900602&bu=8589892792&frm=w&z=34801&op=0&oc=843169247&section=recommend',
         'info_dict': {
-            'id': '843902317',
+            'id': '1129900602',
             'ext': '3gp',
-            'title': 'Movie Trailer: Noah',
-            'duration': 139,
+            'title': 'Top 10 TV Convicts',
+            'duration': 733,
         }
     }
 
     def _real_extract(self, url):
-        mobj = re.match(self._VALID_URL, url)
-        video_id = mobj.group('id')
-
+        video_id = self._match_id(url)
         webpage = self._download_webpage(url, video_id)
+
         ad_m = re.search(
             r'''value="No.*?" onClick="location.href='([^"']+)'"''', webpage)
         if ad_m:
@@ -37,26 +38,29 @@ class VuClipIE(InfoExtractor):
             webpage = self._download_webpage(
                 adfree_url, video_id, note='Download post-ad page')
 
-        links_code = self._search_regex(
-            r'(?s)<div class="social align_c".*?>(.*?)<hr\s*/?>', webpage,
-            'links')
-        title = self._html_search_regex(
-            r'<title>(.*?)-\s*Vuclip</title>', webpage, 'title').strip()
+        error_msg = self._html_search_regex(
+            r'<p class="message">(.*?)</p>', webpage, 'error message',
+            default=None)
+        if error_msg:
+            raise ExtractorError(
+                '%s said: %s' % (self.IE_NAME, error_msg), expected=True)
 
-        quality_order = qualities(['Reg', 'Hi'])
-        formats = []
-        for url, q in re.findall(
-                r'<a href="(?P<url>[^"]+)".*?>(?P<q>[^<]+)</a>', links_code):
-            format_id = compat_urllib_parse_urlparse(url).scheme + '-' + q
-            formats.append({
-                'format_id': format_id,
-                'url': url,
-                'quality': quality_order(q),
-            })
-        self._sort_formats(formats)
+        # These clowns alternate between two page types
+        video_url = self._search_regex(
+            r'<a[^>]+href="([^"]+)"[^>]*><img[^>]+src="[^"]*/play\.gif',
+            webpage, 'video URL', default=None)
+        if video_url:
+            formats = [{
+                'url': video_url,
+            }]
+        else:
+            formats = self._parse_html5_media_entries(url, webpage, video_id)[0]['formats']
 
-        duration = parse_duration(self._search_regex(
-            r'\(([0-9:]+)\)</span></h1>', webpage, 'duration', fatal=False))
+        title = remove_end(self._html_search_regex(
+            r'<title>(.*?)-\s*Vuclip</title>', webpage, 'title').strip(), ' - Video')
+
+        duration = parse_duration(self._html_search_regex(
+            r'[(>]([0-9]+:[0-9]+)(?:<span|\))', webpage, 'duration', fatal=False))
 
         return {
             'id': video_id,
