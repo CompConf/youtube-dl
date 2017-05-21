@@ -656,7 +656,11 @@ from .nick import (
     NickDeIE,
     NickNightIE,
 )
-from .niconico import NiconicoIE, NiconicoPlaylistIE, NiconicoHTML5IE
+from .niconico import (
+    NiconicoIE, 
+    NiconicoPlaylistIE, 
+    NiconicoHTML5IE,
+)
 from .ninecninemedia import (
     NineCNineMediaStackIE,
     NineCNineMediaIE,
